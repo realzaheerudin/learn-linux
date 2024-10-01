@@ -1,0 +1,14 @@
+{
+    "recommendations": [
+        "maptz.camelcasenavigation",
+        "wmaurer.change-case",
+        "streetsidesoftware.code-spell-checker",
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        "wraith13.open-in-github-desktop",
+        "gruntfuggly.todo-tree",
+        "vscode-icons-team.vscode-icons",
+        "sonarsource.sonarlint-vscode",
+        "george-alisson.html-preview-vscode"
+    ]
+}

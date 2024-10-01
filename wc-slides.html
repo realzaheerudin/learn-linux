@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduction to the wc Command</title>
+
+    <!-- Reveal.js Styles -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/black.min.css" id="theme">
+</head>
+
+<body>
+
+    <div class="reveal">
+        <div class="slides">
+
+            <section>
+                <h1>The <code>wc</code> Command</h1>
+                <p>Introduction to the Linux Word Count Command</p>
+                <p>By Zaheer Udin K00287263</p>
+            </section>
+
+            <section>
+                <h2>Basic Description</h2>
+                <p><code>wc</code> stands for "word count" and is a command-line tool in Unix/Linux systems.</p>
+                <p>It is used to count lines, words, and bytes/characters in text files.</p>
+            </section>
+
+            <section>
+                <h2>Syntax and Options</h2>
+                <p>General syntax for the <code>wc</code> command:</p>
+                <pre><code>wc [options] [file]</code></pre>
+                <p>Common options:
+                <ul>
+                    <li><code>-l</code> : Count lines</li>
+                    <li><code>-w</code> : Count words</li>
+                    <li><code>-c</code> : Count bytes (characters)</li>
+                    <li><code>-m</code> : Count characters (useful for UTF-8)</li>
+                </ul>
+                </p>
+            </section>
+
+            <section>
+                <h2>Why You Might Use It</h2>
+                <ul>
+                    <li>To quickly get a summary of file contents (lines, words, characters)</li>
+                    <li>Useful for processing text files in shell scripts</li>
+                    <li>Helps in file analysis, especially in log files or datasets</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Example</h2>
+                <p>Basic example of <code>wc</code>:</p>
+                <pre><code>echo "Hello World" | wc</code></pre>
+                <p>Output: <code>1 2 11</code> (1 line, 2 words, 11 characters)</p>
+                <p>Another example to count lines in a file:</p>
+                <pre><code>wc -l my-file.txt</code></pre>
+                <p>Output: Number of lines in <code>my-file.txt</code>.</p>
+            </section>
+
+            <section>
+                <h2>Using <code>wc</code> with Other Commands</h2>
+                <p>You can combine <code>wc</code> with other Linux commands. For example:</p>
+                <pre><code>ls | wc -l</code></pre>
+                <p>This counts how many files/folders are in the current directory.</p>
+            </section>
+
+            <section>
+                <h2>Manual Section</h2>
+                <p>For more details, refer to the manual:</p>
+                <pre><code>man wc</code></pre>
+                <p>The manual explains all options, including additional ones like <code>-L</code> (find longest line).
+                </p>
+            </section>
+
+            <section>
+                <h2>Things to Watch Out For</h2>
+                <ul>
+                    <li><strong>Character encoding issues:</strong> Use <code>-m</code> for multi-byte characters (like
+                        UTF-8)</li>
+                    <li><strong>Binary files:</strong> Counting lines or words in non-text files might produce
+                        unexpected results</li>
+                    <li><strong>Combination of options:</strong> Using multiple options together might require careful
+                        parsing of output</li>
+                </ul>
+            </section>
+
+            <section>
+                <h1>Thank You!</h1>
+                <p>Any Questions?</p>
+                <p>For more information, see the <a href="https://linux.die.net/man/1/wc" target="_blank">wc command manual</a>.</p>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.min.js"></script>
+
+    <script>
+        Reveal.initialize();
+    </script>
+
+</body>
+
+</html>
