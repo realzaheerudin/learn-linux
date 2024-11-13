@@ -81,3 +81,86 @@ Unmount the filesystems.
 Paste in the commands and results below.
 
 Include comments if necessary.
+
+
+```txt
+user@vbox:~> lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda      8:0    0   12G  0 disk 
+├─sda1   8:1    0  512M  0 part /boot/efi
+└─sda2   8:2    0 11.5G  0 part /var
+                                /usr/local
+                                /root
+                                /tmp
+                                /home
+                                /boot/grub2/i386-pc
+                                /boot/grub2/x86_64-efi
+                                /opt
+                                /srv
+                                /
+sdb      8:16   0  512M  0 disk 
+sdc      8:32   0  512M  0 disk 
+sdd      8:48   0  512M  0 disk 
+sde      8:64   0  512M  0 disk 
+sr0     11:0    1  550M  0 rom  /run/media/user/GParted-live
+
+user@vbox:/mnt> dir
+total 0
+drwxr-xr-x 1 root root 0 Nov 13 22:42 btrfs
+drwxr-xr-x 1 root root 0 Nov 13 22:41 ext4
+drwxr-xr-x 1 root root 0 Nov 13 22:38 fat_mount
+drwxr-xr-x 1 root root 0 Nov 13 22:41 ntfs
+
+vbox:/mnt # mount | grep "/mnt"
+/dev/sdb1 on /mnt/fat type vfat (ro,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro)
+/dev/sdc1 on /mnt/ext4 type ext4 (rw,relatime)
+/dev/sdd1 on /mnt/ntfs type fuseblk (rw,nosuid,nodev,relatime,user_id=0,group_id=0,allow_other,blksize=4096)
+/dev/sde1 on /mnt/btrfs type btrfs (rw,nosuid,relatime,space_cache,subvolid=5,subvol=/)
+```
+
+```txt
+vbox:/mnt # findmnt | grep "/mnt/"
+├─/mnt/fat                            /dev/sdb1                           vfat            ro,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro
+├─/mnt/ext4                           /dev/sdc1                           ext4            rw,relatime
+├─/mnt/ntfs                           /dev/sdd1                           fuseblk         rw,nosuid,nodev,relatime,user_id=0,group_id=0,allow_other,blksize=4096
+└─/mnt/btrfs                          /dev/sde1                           btrfs           rw,nosuid,relatime,space_cache,subvolid=5,subvol=/
+```
+
+```txt
+vbox:/mnt # du -sh /mnt/fat /mnt/ext4 /mnt/ntfs /mnt/btrfs
+4.0K    /mnt/fat
+13K     /mnt/ext4
+4.0K    /mnt/ntfs
+16K     /mnt/btrfs
+
+vbox:/mnt # df -h /mnt/fat /mnt/ext4 /mnt/ntfs /mnt/btrfs
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdb1       510M  4.0K  510M   1% /mnt/fat
+/dev/sdc1       469M   14K  440M   1% /mnt/ext4
+/dev/sdd1       511M  3.1M  508M   1% /mnt/ntfs
+/dev/sde1       511M  3.5M  430M   1% /mnt/btrfs
+```
+
+```txt
+vbox:/mnt # 
+vbox:/mnt # umount /mnt/fat
+vbox:/mnt # umount /mnt/ext4
+vbox:/mnt # umount /mnt/ntfs
+vbox:/mnt # umount /mnt/btrfs
+vbox:/mnt # 
+vbox:/mnt # findmnt | grep "/mnt"
+vbox:/mnt # 
+vbox:/mnt # df | grep "/mnt"
+vbox:/mnt #
+```
+
+```txt
+vbox:/mnt # blkid
+/dev/sda1: UUID="CE9E-A09D" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="bc3f902f-e8b2-47da-8d65-12968b27ff00"
+/dev/sda2: UUID="f6a24ff6-109d-4863-bb7c-e6581e68daa2" UUID_SUB="80605b53-1b96-45b9-9dd1-6f41b7028cec" BLOCK_SIZE="4096" TYPE="btrfs" PARTUUID="73892896-59b6-4376-9e99-ffb479a56904"
+/dev/sdb1: UUID="F9DC-24A1" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="d1bd079c-01"
+/dev/sdc1: UUID="25286243-6524-426b-b079-4dad68189e85" BLOCK_SIZE="1024" TYPE="ext4" PARTUUID="e7dfdfd7-01"
+/dev/sdd1: BLOCK_SIZE="512" UUID="593ED9B21E0F2C32" TYPE="ntfs" PARTUUID="db9754cc-01"
+/dev/sde1: UUID="1ff8e680-0538-4349-84f0-07ec554a5555" UUID_SUB="ccf10b38-f605-475a-9da8-46081ba446b4" BLOCK_SIZE="4096" TYPE="btrfs" PARTUUID="9c58d406-01"
+/dev/sr0: BLOCK_SIZE="2048" UUID="2024-09-28-02-37-36-00" LABEL="GParted-live" TYPE="iso9660" PTUUID="2bb2e5d0" PTTYPE="dos"
+```
