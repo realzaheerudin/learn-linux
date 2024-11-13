@@ -164,3 +164,38 @@ vbox:/mnt # blkid
 /dev/sde1: UUID="1ff8e680-0538-4349-84f0-07ec554a5555" UUID_SUB="ccf10b38-f605-475a-9da8-46081ba446b4" BLOCK_SIZE="4096" TYPE="btrfs" PARTUUID="9c58d406-01"
 /dev/sr0: BLOCK_SIZE="2048" UUID="2024-09-28-02-37-36-00" LABEL="GParted-live" TYPE="iso9660" PTUUID="2bb2e5d0" PTTYPE="dos"
 ```
+
+---
+
+# Quiz 2
+
+## Quesrion 1 (50 marks)
+
+Add entries to your /etc/fstab file (yes, edit the actual file) which will mount the three partitions on your second virtual drive when the system boots.
+
+Give them options as follows:
+
+the FAT partition should be mounted read-only
+the ext4 partition should have the nosuid option set but be read-write
+the third partition should have simply the default options
+Paste in your fstab file below.
+
+ 
+
+Caution: errors in fstab can render your system unbootable; on a real system, you then have to boot from a USB drive using something like GParted and fix the fstab, or work out how to start the system in "single user" mode and fix it. It's a good idea to copy critical system files like this before editing them so you know what was in the old version and can put it back easily.
+
+SNAPSHOT YOUR VM BEFORE ATTEMPTING THIS PRACTICAL! THAT WAY YOU CAN ROLL BACK THE CHANGES IF IT BREAKS SOMETHING.
+
+## Question 2 (20 marks)
+
+Reboot your system so that the new entries should be applied and the three file systems mounted.
+
+Paste in the output of the mount command below showing the three mounted filesystems.
+
+Hint: Use findmnt or df to see the mounted filesystems
+
+ 
+
+Caution: errors in fstab can render your system unbootable; you then have to boot from a CD/USB drive and fix the fstab, or work out how to start the system in "single user" mode and fix it.
+
+IT IS A GOOD IDEA TO TEST THE /etc/fstab BEFORE REBOOTING, AND TO SNAPSHOT THE VM BEFORE CHANGING THE /etc/fstab.
