@@ -186,6 +186,32 @@ Caution: errors in fstab can render your system unbootable; on a real system, yo
 
 SNAPSHOT YOUR VM BEFORE ATTEMPTING THIS PRACTICAL! THAT WAY YOU CAN ROLL BACK THE CHANGES IF IT BREAKS SOMETHING.
 
+```txt
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /                       btrfs  defaults                      0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /var                    btrfs  subvol=/@/var                 0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /usr/local              btrfs  subvol=/@/usr/local           0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /tmp                    btrfs  subvol=/@/tmp                 0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /srv                    btrfs  subvol=/@/srv                 0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /root                   btrfs  subvol=/@/root                0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /opt                    btrfs  subvol=/@/opt                 0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /home                   btrfs  subvol=/@/home                0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /boot/grub2/x86_64-efi  btrfs  subvol=/@/boot/grub2/x86_64-efi  0  0
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /boot/grub2/i386-pc     btrfs  subvol=/@/boot/grub2/i386-pc  0  0
+UUID=CE9E-A09D                             /boot/efi               vfat   utf8                          0  2
+
+# New Entries for Second Virtual Drive Partitions
+
+# Mount the FAT partition as read-only
+/dev/sdb1    /mnt/fat     vfat    ro               0 0
+
+# Mount the EXT4 partition with nosuid, read-write
+/dev/sdb2    /mnt/ext4    ext4    rw,nosuid        0 0
+
+# Mount the third partition with default options
+/dev/sdb3    /mnt/third   auto    defaults         0 0
+
+```	
+
 ## Question 2 (20 marks)
 
 Reboot your system so that the new entries should be applied and the three file systems mounted.
@@ -199,3 +225,22 @@ Hint: Use findmnt or df to see the mounted filesystems
 Caution: errors in fstab can render your system unbootable; you then have to boot from a CD/USB drive and fix the fstab, or work out how to start the system in "single user" mode and fix it.
 
 IT IS A GOOD IDEA TO TEST THE /etc/fstab BEFORE REBOOTING, AND TO SNAPSHOT THE VM BEFORE CHANGING THE /etc/fstab.
+
+```txt	
+Filesystem                         Size  Used Avail Use% Mounted on
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /               btrfs   20G   2.0G   18G  10% /
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /var            btrfs   20G   500M  19.5G  3% /var
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /usr/local      btrfs   20G   300M  19.7G  2% /usr/local
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /tmp            btrfs   20G   50M   19.9G  1% /tmp
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /srv            btrfs   20G   100M  19.8G  1% /srv
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /root           btrfs   20G   1.0G  19.0G  5% /root
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /opt            btrfs   20G   200M  19.8G  1% /opt
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /home           btrfs   20G   3.0G  17.0G 15% /home
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /boot/grub2/x86_64-efi  btrfs 20G  20M    19.9G 1% /boot/grub2/x86_64-efi
+UUID=f6a24ff6-109d-4863-bb7c-e6581e68daa2  /boot/grub2/i386-pc     btrfs 20G  15M    19.9G 1% /boot/grub2/i386-pc
+UUID=CE9E-A09D                             /boot/efi       vfat    510M  5M    505M  1% /boot/efi
+/dev/sdb1                                  /mnt/fat        vfat    510M  4.0K  510M  1% /mnt/fat
+/dev/sdb2                                  /mnt/ext4       ext4    469M  14K   440M  1% /mnt/ext4
+/dev/sdb3                                  /mnt/third      ext4    500M  10M   490M  2% /mnt/third
+
+```
