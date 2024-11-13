@@ -5,7 +5,7 @@ Calculate the checksum for the test file using sum. What is the value?
 
 ## Question 1 (5 Marks)
 
-1. 46387
+1. 46,387
 2. 0x46387
 3. AB546
 4. FFFFF
@@ -13,28 +13,24 @@ Calculate the checksum for the test file using sum. What is the value?
 
 ## Answer 1
 
-Sure, here is the format fixed for the remaining questions:
-
----
+46,387
 
 ## Question 2 (5 Marks)
 
 Again, use `sum` to calculate the checksum for the test file, but this time use the `-s` option to see the different algorithm. What is the result?
-
-### Answer 2
 
 1. 24117
 2. 46387
 3. 0xabf01
 4. 53216
 
----
+### Answer 2
+
+24117
 
 ## Question 3 (5 Marks)
 
 Calculate the checksum for the test file using `cksum`. What is the value?
-
-### Answer 3
 
 1. 687179908
 2. 0x53867
@@ -42,13 +38,13 @@ Calculate the checksum for the test file using `cksum`. What is the value?
 4. FFFFFF
 5. None of the answers
 
----
+### Answer 3
+
+687179908
 
 ## Question 4 (5 Marks)
 
 Convert the CRC32 value to hexadecimal notation using `KCalc`. What is the value?
-
-### Answer 4
 
 1. 28f58884
 2. ab45f236
@@ -56,13 +52,11 @@ Convert the CRC32 value to hexadecimal notation using `KCalc`. What is the value
 4. ffffffff
 5. None of the answers
 
----
+### Answer 4
 
 ## Question 5 (10 Marks)
 
 Install `crc32csum`. Calculate the checksum for the test file using `crc32csum`. What is the value?
-
-### Answer 5
 
 1. 416cdc0f
 2. 65ff34aa
@@ -70,7 +64,7 @@ Install `crc32csum`. Calculate the checksum for the test file using `crc32csum`.
 4. FFFFFF
 5. None of the answers
 
----
+### Answer 5
 
 ## Question 6 (20 Marks)
 
