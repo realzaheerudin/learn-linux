@@ -1,0 +1,1031 @@
+CNSM2 System Internals and Data Formats
+
+Séamus Ó Ciardhuáin
+Room 3B08, tel. (061) 208 319; Email Seamus.OCiardhuain@LIT.ie
+
+Data Compression
+
+Data compression is the process of encoding information using a representation that requires fewer bits than the original representation.
+
+Although data storage capacity and network speeds are increasing all the time, there are still many occasions when it would be useful to reduce the size of data.
+
+The storage device may be of a fixed size, e.g. a CDROM or DVD ROM.
+We may be short of space and not able to upgrade.
+We may want to archive data and use as little space as possible to store it.
+Even at fast transmission speeds, it will be faster to send a smaller number of data bytes. At slow speeds, it may not be practical to send the required data at all.
+Some file systems limit the size of files, so to store large files may require them to be compressed.
+
+Compression of data is often combined with archiving, e.g. in the WinZip utility, but in fact compression is a separate issue:
+compression reduces the size of the data to be stored or transmitted
+archiving creates a single file which contains a number of files/folders within it, making it easier to transfer and manage. 
+
+We can consider data compression to fall into two large categories:
+Lossless compression: on decompressing the data, we get back exactly what we had originally.
+Lossy compression: on decompressing the data, we get back something very similar but of reduced quality because some of the data has been discarded by the compression.
+
+The success of compression will depend on the type of data, and for this reason there are many different algorithms available. Some are general-purpose, and will compress anything; others are designed for particular data types and give better results for that data than a general-purpose algorithm.
+
+Lossy compression is usually for specific data types, e.g. JPEG for images, MP3 for audio.
+
+In general, the better the compression obtained, the more time is required to compress and decompress. However, there are algorithms which are slow to compress but fast to decompress, and vice versa.
+
+Measuring the Success of Compression
+
+We can measure the effectiveness of a compression algorithm by using the compression ratio:
+
+	CR = (size after compression) ÷ (size before compression)
+
+Thus a compression algorithm must give a CR < 1 to be any good! Typically, we give a percentage: if the compression ratio is 88%, then the compressed file is 88% of the size of the original.
+
+Most compression programs will show you the compression ratio. Archiving programs such as WinZip can use this to check that files have been reduced by compression, and which algorithms gave the best result.
+
+Note: in some cases, compression can result in a file that is large than the original. This usually means an unsuitable algorithm for the data was used.
+
+Lossless Compression
+
+We want to reduce the space required without loss of any data.
+
+The basis of lossless compression is statistical redundancy in the data: 
+Most data contains repetitive parts. For example, text files commonly have the same string of charaters repeated many times (“the”).
+Data is usually encoded in a form that is convenient for the programmer, but may not be the most efficient representation. This leads to the redundancy.
+
+Run length encoding (RLE)
+
+A very simple idea: if we have a series of identical data bytes, it is more efficient to store a count and the byte value rather than many copies of the byte.
+
+RLE is not good where there are a lot of runs of one byte – why?
+
+
+In compressed form this becomes:
+
+RLE is commonly used as an image compression format since images often contain large runs of the same pixel value (same colour), especially images in black-and-white and ones created by programs, e.g. logos with large solid colour areas.
+
+RLE is very simple to implement and is often combined with other methods to gain additional compression following another algorithm.
+
+
+
+Dictionary-based Coding
+
+This is similar to RLE in some ways, but instead of looking for a run of values, we look for repeated sequences in the data.
+
+If there are repeated sequences in the data we can replace them with a code that tells us how to look up the full sequence in a “dictionary”.
+
+
+If we replace the sequence “2 3 4” with a single value “x” we compress that sequence to one-third of its size.
+
+
+The dictionary consists of only one entry: x = “2 3 4”. Whenever x is encountered in the data, the software replaces it with the sequence of values “2 3 4”. For most computer data this will lead to a significant reduction in size.
+
+The compression software builds the dictionary as it goes, so it adapts to the particular data we are working on. 
+
+This idea of using a dictionary is the basis of a large number of compression algorithms and programs.
+
+If we have the dictionary available, we can access any part of the data without going through the preceding data. 
+
+CNSM2 System Internals and Data Formats
+
+Séamus Ó Ciardhuáin
+Room 3B08, tel. (061) 208 319; Email Seamus.OCiardhuain@LIT.ie
+
+Data Compression (2)
+
+
+An Alternative Definition of Compression Ratio
+
+We defined the compression ratio as CR = (compressed size) ÷ (original size)
+We may give this as a fraction or as a percentage. E.g. the original file is 100,596 bytes. The compressed file is 53,345 bytes. So
+
+	CR = 53,345 / 100,596 = 0.53 or 53%
+
+
+Another way of defining CR is 
+
+	CR = 1 –  [ (compressed size) ÷ (original size) ] 
+
+So in the case above we would have CR = 1 – 0.53 = 0.47 or 47%
+
+Using this definition, a file that does not reduce at all has a ratio of 0%, while a file that compressed to nothing (unlikely!) would be 100% compressed.
+
+It is important to understand that these are simply different ways of expressing the same thing, but you need to be aware that the exact definition can vary so that you need to be sure which one is being used.
+
+You may also see compression described as “2:1” or similar ratios: this means the original file was twice the size of the compressed result.
+
+Dictionary-Based Compression (continued)
+
+Three important algorithms are LZ77, LZ78 and LZW. There are many variations on these to give better compression.
+
+LZ77
+
+The first dictionary compression scheme to be developed is known as LZ77 (after its inventors  Abraham Lempel and Jacob Ziv, who published it in 1977). It has been very widely used, e.g. the Unix compress(1) program and a modified version called DEFLATE (.gz and .zip files, defined in RFC1951).
+
+LZ77 works by defining a sliding window into the previous data. This is simply a buffer which contains the previous uncompressed data. When a sequence of bytes is found which has been seen in the earlier data, then it is replaced with a reference to the previous data made up of a length and a distance: the distance tells how far back to go and the length tells how many bytes to replace. The sliding window is the dictionary for this method. As the algorithm moves through the data, the sliding window is moved along as well, so it refers to only part of the previous data depending on the size of the sliding window. 
+
+The window is often something like 4kB or 32kB. Some implementations of LZ77 may allow you to specify the size of the window. The window size is fixed for each file as it is compressed; it is not changed as compression proceeds. 
+
+The window size is important because the algorithm must keep that much of the preceding data in memory; in 1977 this was an important question, but is less so now since memory is cheap and plentiful. The larger the window, the further back in the data the algorithm can look, but the more memory is needed to hold data.
+
+LZ77 must decompress starting at the beginning of the data; you cannot access data part way through the compressed file without decompressing everything before it to reconstruct the sliding window.
+
+
+LZ78
+
+LZ78 was published by the same people a year later. It is very similar to LZ77 but does not use a sliding window; instead, it builds a dictionary. Each entry in the dictionary consists of a character and a reference to a previous entry, so that it is easy to add a new string to the dictionary when one is found.
+
+For example, suppose we say that the dictionary entry 0 indicates an empty string. The first dictionary entry becomes
+
+Entry number
+Previous entry
+Character to append to previous
+0
+-
+-
+
+
+The first character we find in the input is “a”. We add this to the table:
+
+Entry number
+Previous entry
+Character to append to previous
+0
+-
+-
+1
+0
+a
+
+When we find the word “an” we add an entry:
+
+Entry number
+Previous entry
+Character to append to previous
+0
+-
+-
+1
+0
+a
+2
+1
+n
+
+When we find “and” we have:
+
+Entry number
+Previous entry
+Character to append to previous
+0
+-
+-
+1
+0
+a
+2
+1
+n
+3
+2
+d
+
+Now whenever we find “an” it can be replaced with “2” and the word “and” can be replaced with 3. The longer the sequences we find and add, the better the compression becomes.
+
+If we find “e”, then a new entry is added:
+
+Entry number
+Previous entry
+Character to append to previous
+0
+-
+-
+1
+0
+a
+2
+1
+n
+3
+2
+d
+4
+0
+e
+
+The dictionary is stored with the compressed data, and the size of dictionary allowed affects the compression achieved. Frequently used strings are added to the dictionary, and the strings can be very long so that good compression is achieved. There is no limitation caused by the size of the sliding window.
+
+LZW
+
+LZW is a modified version of LZ78 by Lempel, Ziv and Terry Welch (1984). It gives good lossless compression and is commonly used.
+
+The idea is to initialize the dictionary with every possible character value, and then add further entries. This speeds up the algorithm, and also allows it to be adapted to different types of coding: e.g. instead of single-byte data we could have a version working on two-byte characters (such as Unicode text). The width of the dictionary entries does not have to be fixed – e.g. start with 8 bits, and when all 8-bit values are used move to using 9-bit values, and so on. Although this makes the software more complex, it allows better compression.
+
+Another improvement is to have a special code which can be placed in the data to indicate that the dictionary should be re-initialized. This means that the algorithm can adapt to changing data, and is not limited so much by the size of the dictionary. In LZ78, if the dictionary is full then compression cannot improve any further, even if the data changes, because new strings cannot be added. The compression program can even monitor the data and re-initialize the dictionary if it no longer matches the data well.
+
+An important benefit is that the dictionary does not have to be sent with the data – the decompression can begin with the same initialized dictionary and build up the dictionary as it goes.
+
+Until 2003 there was a patent on LZW which somewhat restricted its use before that time. LZ77 and LZ78 were not restricted.
+
+
+Modelling and Coding
+
+What is really happening with lossless compression? We are taking a stream of symbols and replacing them with codes. We can reverse this process to recover the original data. If compression is working on the data, then the stream of codes is smaller than the original stream of symbols.
+
+We can consider this process as having two parts: the codes, and a model which describes how to choose the codes to output. The model should match the type of data we are compressing so that we get the best result. An encoder uses the model to decide which code should be used to replace symbols.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The model describes the probability of each possible symbol (how likely it is to appear). If we have the probabilities for a given stream of data, we can choose the best encoding for it.
+
+There are two approaches:
+Profile a type of data in advance, and build the encoder using that information.
+Build the encoder to profile the data as it works and choose the encoding based on the changing data.
+
+“Profiling the data” here means estimating the probability of a symbol occurring in the input stream.
+
+The first approach was more practical with early compression systems, while the second has the potential for better results in general.
+
+If we know that a symbol has high probability, then we can use fewer bits to encode it (saving space because it occurs frequently); if it has low probability, then we can use more bits for the code (but will have to output it less often).
+
+This concept is part of information theory (we mentioned this in relation to error detection too), developed by Claude Shannon in the 1940s. A key idea is the entropy of a symbol, which is measured in bits:
+
+	entropy of symbol   =   -log2 (probability of symbol)
+
+The entropy of a message is the total number of bits.
+
+Using the probabilities of symbols, we can calculate the entropy. This indicates the minimum number of bits required to represent it. Compression is about attempting to get closer to the theoretical minimum. The hardest part is determining the probabilities.
+
+
+CNSM2 Systems Internals & Data Formats
+
+Séamus Ó Ciardhuáin
+Room 3B08, tel. (061) 208 319; Email Seamus.OCiardhuain@LIT.ie
+
+Time
+
+UTC/GMT
+
+UTC = Coordinated Universal Time
+This is the international time reference maintained using atomic clocks. Leap seconds are occasionally added to allow for the changing speed of rotation of the earth.
+
+GMT = Greenwich Mean Time
+The older international reference, based on solar time at Greenwich, London.
+
+UTC and GMT are nearly identical (to within ±0.9 seconds) and are commonly interchangeable. In general, when “GMT” is used it is really referring to UTC.
+
+Also called “Zulu time”. Z = zero meridian through Greenwich. Commonly written with a “Z” after the time, e.g. 15:54Z means 15:54 UTC. “Z” is read as “Zulu” following the radiotelephony alphabet used by the International Civil Aviation Organization; see http://www.icao.int/icao/en/trivia/alphabet.htm.
+
+Time Zones, Local Time and Daylight Saving Time
+
+Time zones reflect distance east or west of the Greenwich meridian. However, for convenience many countries modify their time zones to include the complete country if this does not cause too much deviation from the time of day. Large countries cover many time zones.
+
+Local time is the time in the time zone at a given place. 
+
+Daylight Saving Time or Summer Time is commonly used, usually moving clocks forward 1 hour in Spring and back 1 hour in Autumn. However, this has not been consistently done everywhere in the past, and some countries (e.g. Iceland) don’t use it.
+
+The Olson Data: also called the zoneinfo database or the tz database. This is a public domain database of information about time zones covering historical data, daylight saving, and other details. It is used by many computer systems to configure the time. A zone is identified by a name REGION/CITY, e.g. Europe/Dublin. In 2011 this was taken over by the Internet Assigned Numbers Authority (IANA) following claims of copyright infringement. This database is used by operating systems to determine the local time from UTC.
+
+In Ireland, the time zone in winter is “GMT” or “Western European Time” (WET); in summer it is “Irish Summer Time” (IST) which is also called “Western European Summer Time” (WEST).
+
+Important: time zone abbreviations like “IST” are not necessarily unique, so the preferred way is to specify the offset from UTC.  For example:
+
+Abbreviation
+Description
+Relative to UTC
+IST
+Irish Summer Time
+UTC+0100
+IST
+Israeli Standard Time
+UTC+0200
+IST
+Iran Standard Time
+UTC+0330
+IST
+Indian Standard Time
+UTC+0530
+(from http://www.worldtimezone.com/wtz-names/wtz-ist.html)
+
+Formats for Writing the Time
+
+ISO time standard
+
+ISO8601:2004 (in Europe EN28601, which is a standard in Ireland) specifies standard ways to write the time. The basic format is:
+
+			yyyy-mm-dd hh:mm:ss
+
+		e.g. 2010-03-24 15:30:12
+
+Midnight is 00:00. By convention, you can write 24:00 to indicate midnight at the end of a day; 00:00 is interpreted to be midnight at the beginning of a day.
+
+This has significant advantages:
+It is unambiguous (no American vs. European confusion).
+It will be sorted in the correct order by most software (spreadsheets etc.)
+
+The standard allows a number of variations on this basic format.
+
+A “T” can be inserted to show the separation between date and time:
+2010-03-24T15:30:12
+Separator characters other than “T” can be omitted:
+20100324T153012
+A month can be specified:
+2010-03
+A day of the year:
+2010-083
+A week of the year:
+2010-W12
+A day in a week of the year (Monday is Day 1):
+2010-W12-3
+2010-W12-3T15:30
+Decimal seconds:
+15:30:05.43 or 15:30:05,43
+Comma is preferred as the decimal separator.
+
+UTC is specified using “Z”: 15:30:00Z
+
+Offsets from UTC are specified using +hhmm/+hh:mm or -hhmm/-hh:mm
+		15:30:05+0100
+
+RFC time formats
+
+Internet RFCs specify a number of ways to write the time. The most common is probably the one used for email (RFC 822, 2822, 5322) which uses the format:
+
+	Wed, 24 Feb 2010 18:16:08 +0000
+
+However, RFC5322 also specifies some older formats which may be encountered. In particular, there may be a timezone specification such as “GMT” or “PST” instead of, or as well as, the numeric one. The RFC specifies what the acceptable zone abbreviations are but they should no longer be used. Note that the 24-hour clock is used.
+
+RFC 3339 “defines a date and time format for use in Internet protocols that is a profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar”. See section 5.8 of the RFC for examples.
+
+W3C specification
+
+http://www.w3.org/TR/NOTE-datetime
+
+Again this is based on ISO 8601, and is similar to RFC 3339.
+
+OS Formats for Time
+
+For most systems, including PCs, we need to think of two clocks: the hardware clock and the system clock.
+
+System Clock
+
+This is the time value maintained by the OS while it is running.
+
+Linux and Unix systems store time in the system kernel as the number of seconds since 1970-01-01 00:00:00. The system time is UTC and is initialized from the hardware clock on startup. For systems using 32-bit signed time values, the clock will run out on 19 January 2038, the “Y2k38 bug”. More recent systems have started to use 64-bit times, which will not run out until  292,277,026,596 CE. 
+
+Windows NT and its descendants keep the system clock as a 64-bit value giving the number of 100 nanosecond intervals since 1601-01-01 00:00:00. This runs out in May 60,056 CE. Windows keeps the system clock as UTC. The system time is initialized from the hardware clock on startup. 
+
+Displayed Time
+
+Although the system internally keeps UTC, it is normal for it to be displayed to users as local time. There is therefore a time zone setting for the system. This will also be affected by Daylight Saving Time, so it is important to know the timezone and the date.
+
+Hardware Clock
+
+Also called BIOS clock or CMOS clock or realtime clock (RTC). This is the electronic clock on the system motherboard which is kept running when power is off by a battery. The time stored in it can be set from the BIOS when you boot the PC: the exact method depends on the BIOS used by the manufacturer.
+
+PC clocks in general have poor accuracy but consistent amount of inaccuracy; in other words they drift significantly from the correct time, but this drift is predictable for a given PC based on past behaviour.
+
+Different systems store different times in the hardware clock: 
+Windows stores local time.
+Linux/Unix/MacOS store UTC. 
+This can give rise to problems with multiple-boot systems: when the system starts up it may misinterpret the time. The usual solution is to make Linux/Unix/MacOS use local time from the hardware clock, since making Windows use UTC is hard (it can be done if essential).
+
+NB this means for a Windows PC you need to know what zone it was set in. Time in the hardware clock will change if DST is used.
+
+The man page for the Linux hwclock(8) program has a lot of information about how the clock works.
+
+Other Devices
+
+Other devices such as network routers, printers and so on usually have some idea of the time. Routers can often use NTP, and devices connecting to a Windows domain will probably take its time, but other devices will only have the time as kept by their internal clocks, so recording this time is very important.
+
+Synchronizing Time in Computer Systems
+
+NTP
+RFC 1305 NTPv3 provides accuracies of 1-50 milliseconds, depending on network connection to the server.
+NTPv4 under development
+UDP port 123
+SNTP (RFC 2030) is a simplified version of NTP. This is used by some Windows versions.
+
+NTP is based on synchronizing with a small number of very accurate servers around the world, which use carefully maintained atomic clocks. Rather than have everyone synchronize to these directly, a hierarchy of servers is used. Each level is called a stratum, numbered from 0:
+Stratum 0 is the atomic clock or GPS device.
+Stratum 1 is the computer system attached to the Stratum 0 device and to the network.
+Stratum 2 consists of computers sending requests to Stratum 1. Stratum 2 systems can cooperate to provide better time to ...
+Stratum 3, etc.
+There can in principle be many strata, but in practice there are rarely more than 4 or 5. A typical client uses several NTP servers to get time so that variations caused by network delays can be cancelled out.
+
+NTP provides UTC and no information about local time or daylight saving, etc. The local system has to deal with these issues. 
+
+Many freely accessible servers are available, e.g. http://www.pool.ntp.org. For servers in Ireland, see http://www.pool.ntp.org/zone/ie.
+
+Time synchronization in Windows
+
+The Windows Time Service W32Time is not designed to provide accuracy more than 1-2 seconds, even though it is based on NTP. If you need more, the NTP reference implementation can be used on Windows.
+
+Time service is important in Windows domains so they are usually set up to run properly (needed for security etc.). On logon, client PCs obtain the time from the Domain Controller. The “net time” command will show you the time for your Active Directory server.
+
+The w32tm command is used to configure the Windows Time Service.
+
+Time synchronization in Unix/Linux
+
+There are several implementations of NTP, but the commonest is probably ntpd, configured in the file /etc/ntpd.conf
+
+Old Internet Protocols
+
+DAYTIME (RFC867, port 13 either TCP or UDP) and TIME (RFC868, port 37 either TCP or UDP) are old protocols which were intended to provide time information. Both have been superseded by NTP now but are still available in many systems. The Linux rdate program implements TIME.
+
+GPS time
+
+If NTP can’t be used because there is no network access, many GPS devices can be connected to a PC to provide a very accurate time (<30ns). 
+
+Using Servers to Synchronize Time: HTP
+
+It is not always possible to access an NTP server to synchronize a system to it, e.g. in LIT the firewalls block the necessary ports. However, it is almost always possible to access a web server using HTTP.
+
+Response headers from HTTP servers must (according to the HTTP RFCs) include data about the server’s time, and since such servers are typically synchronized using NTP this data can be used to set the time by looking at the time returned by a number of web servers and averaging it. This is called the “HTTP Time Protocol” (HTP).
+
+You can download a program called htpdate for this:
+	http://www.clevervest.com/foswiki/bin/view/HTP/WebHome
+
+Some Comments on Time and Computer Systems
+
+It is sensible to use NTP to maintain accurate time on systems. There is almost no network overhead (and refresh times can be made longer to reduce traffic). NTP is considered a very secure protocol.
+
+Using ISO format times in logs can help to simplify processing, e.g. sorting into timelines. This may require modifying the configuration files to record the times in the correct format.
+
+Batteries and storage: the hardware clock requires a battery to keep it going when the system is powered down. This will eventually run out, so if a PC is stored for a long period it may lose the clock time. 
+
+Time in file systems: most filesystems provide MAC times (modification, access and creation), though with some variations in detail. These are very useful for debugging and examining log files to identify problems. Some issues need to be remembered:
+How does the system time relate to real-world time?
+What was the time on the system managing the filesystem?
+Has daylight saving time been used?
+Times can easily be faked in the file system, either by altering the system clock or by modifying file metadata.
+
+Time in web pages and web servers, and in email and email servers, is usually quite good if they are operated by an ISP or large organization since they will use NTP. 
+
+
+
+Alternative Calendars
+
+Although networks and computer systems use the “Common Era” (CE) for the calendar (exactly the same as the Gregorian calendar AD), remember that there are many other calendars in use around the world and information may be written using them, e.g.:
+Islamic – 2010CE is approximately 1431AH.
+Jewish – 2010CE is approximately 5770AM.
+Chinese – year names; no straightforward numbering.
+Japanese – use CE but also a system based on the reigning emperor.
+Years in different calendars may not correspond exactly since calendars can be based on the lunar cycle, the solar cycle, or a mixture.
+
+E. G. Richards. Mapping Time: The Calendar and its History. Oxford University Press,  1999.
+
+System Internals & Data Formats
+
+Séamus Ó Ciardhuáin
+Room 3B08, tel. (061) 208 319; Email Seamus.OCiardhuain@LIT.ie
+
+Cyclic Redundancy Codes (continued)
+
+Calculating a CRC – Example
+
+Consider using a 4-bit CRC with generator polynomial 10011 (x4 + x1+x0). 
+
+The message is 1101011011.
+
+First, the message must have four 0 bits appended to the end of it (padding), which will become the checksum bits in the transmitted message. This gives  11010110110000.
+
+Next, we must divide the generator into the padded message. We simplify the division process by using Exclusive OR (XOR, written with the symbol ?) instead of subtraction in the calculation (this is called modulo 2 arithmetic). We are not interested in the actual result but rather in the remainder since that is the checksum value we need.
+
+First part of the calculation:
+
+
+       __________________
+10011 | 11010110110000
+     ?  10011
+       ------
+         1001
+
+Use XOR to “subtract” the generator from the left hand part of the message. Next, bring down the next bit from the message, and repeat until there are no more:
+
+       __________________
+10011 | 11010110110000
+     ?  10011
+       ------
+         10011
+        ?10011
+         -----
+
+The full calculation looks like this:
+
+(from Coope et al., Computer Systems, McGraw-Hill, 2002)
+
+
+So the checksum (remainder) is 1110 and the final message becomes 
+
+	 11010110111110
+
+To verify the message, we can repeat the division – however, we start by subtracting the remainder (checksum) from the transmitted message, again using modulo 2 arithmetic. This means that the result of the division should come out as 0. If not, there is an error.
+
+To understand this, suppose that the message we are sending is the number 37 and our generator polynomial is the number 6. Dividing 37/6 gives remainder of 1. In this case the checksum is “1”, and the transmitted message becomes 37_1 (appending 1 as the checksum). The receiver checks it by subtracting 1 from 37 to get 36; dividing by 6 (the generator) gives remainder of 0.
+
+Note that the sender and receiver must both agree on the generator – it is not part of the message.
+
+Example CRCs
+
+CRC-16 defined by CCITT for telecommunications x16 + x12 + x5 + x0
+
+This detects:
+all single and double bit errors
+all errors with an odd number of bits
+all error bursts of 16 bits or less in length
+99.998% of error bursts of 18 bits or longer
+
+CRC-32 designed by IEEE and used in Ethernet (0x4C11DB7 )
+x32 + x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x1 + x0 
+
+System Internals & Data Formats
+
+Séamus Ó Ciardhuáin
+Room 3B08, tel. (061) 208 319; Email Seamus.OCiardhuain@LIT.ie
+
+Hamming Codes (continued)
+
+We start with three intersecting circles, which gives 4 locations for the 4 data bits plus another three spaces for error correction bits.
+
+
+Consider the data word 1110. We will see that to get it to work properly, we need to add an extra overall parity bit, so that the final result is an (8, 4) code.
+
+First, put the 4 data bits in the intersections of the circles:
+
+
+
+
+
+
+Now add even parity bits for each group of three bits enclosed by the circles A, B and  C:
+
+
+Suppose now that one of the bits (the one in circles A and C) is changed. 
+The parity bit for circle A no longer corresponds to the data bits, so we know one of the three bits covered by that parity must be wrong. 
+Similarly, we can see that one of the bits covered by the parity in circle C must be wrong. 
+However, the parity bit for circle B is still correct, so the error can’t be one of the bits in circle B.
+So the error must be in circles A and C, but not B, and only one bit meets that condition. Therefore we can identify the error and correct it, giving us single error correction.
+
+
+This is the (7,4) Hamming code.
+
+However, what happens if two bits are changed?
+
+
+The parity in circle A is wrong.
+The parity in circle B is correct.
+The parity in circle C is correct even though the parity bit has been changed by an error.
+
+The simplest way to correct this is to change the parity in circle A – but this introduces a third error, making things worse than they were!
+
+
+
+
+In order to detect this problem, we add another parity bit covering all the 4 data bits and the previous three parity bits. This allows us to detect the double errors, though not correct them.
+
+
+Looking back to the original situation, we had data bits 1110 and parity bits 100. Applying even parity to these 7 bits we need to add another parity bit of 0. Using this, we can see that the “correction” to the parity bit in circle A has given the wrong overall parity.
+So the extra bit allows us to detect (but not correct) double errors.
+
+By adding an additional parity bit to the (7,4) Hamming code, we have an (8,4) code which is Single Error Correction, Doubled Error Detection (SECDED). This is not very efficient (code rate is 4/8 = 0.5).
+
+However, the same idea can be applied on a larger scale to get for example the (72,64) code used in memory chips. This has a code rate of 64/72 = 0.89, and only 8 additional bits are needed to protect 64 data bits (one extra byte to protect 8 data bytes). SECDED codes are considered adequate for memory systems which are in general not very error-prone.
+
+
+Cyclic Redundancy Checks (CRCs)
+
+A CRC is a type of error detecting code that computes a fixed-size checksum from the data. The checksum is then sent or stored with the data to allow it to be verified later. It is referred to as “redundant” because the extra data is not part of the user data being protected by the checksum. CRCs have a number of properties which make them useful for error detection:
+They can be calculated simply and implemented in hardware.
+They are good at detecting burst errors of the type which commonly occur in communications systems (i.e. a number of errors occur close together).
+The CRC value is fixed length.
+Unlike a cryptographic hash function the same value can occur for different data. This means they are not useful for protecting against intentional changes to data, only against random errors.
+There is a well-understood mathematical theory of CRCs which allows their properties to be analyzed and CRC algorithms to be developed for specific purposes.
+
+The first CRCs were developed in 1961. A very common one called CRC32, which uses a 32-bit checksum, was developed in 1975; it is used for the Frame Check Sequence in Ethernet. Another common one is CRC16 used in IPv4 packets.
+
+The concept of a CRC is to consider a string of bits as the coefficients of a polynomial. A string of k bits will give a polynomial with k terms:
+
+		xk-1 to x0
+
+The 6 bits 110001 gives 
+
+		1x5 + 1x4  + 0x3 + 0x2 +0x1 + x0  
+
+or  
+		x5 + x4 + 1
+
+A polynomial like this is chosen as the generator polynomial G(x) of the CRC. Choosing a different G(x) gives a different CRC.
+
+To calculate the CRC, the message data is also treated as a polynomial M(x) which has m bits. 
+Append r zero bits to the end of the message, where r is the degree of the generator polynomial, to get xrM(x) which has m+r bits.
+This new polynomial is divided by G(x) to give a remainder.
+Subtract the remainder from xrM(x). This is the message to send. The last r bits are the checksum bits. By subtracting the remainder, we get a message that is exactly divisible by G(x).
+
+When the receiver has the message, it divides it by G(x). If there are no errors, the result will be zero. Any other result indicates an error.
+
+Note: since k bits gives a polynomial of degree k-1, you need 33 bits as the generator polynomial to get a 32 bit CRC.
+
+What does dividing the polynomials mean? Since it is all binary data, the calculations are done modulo 2 (meaning no carries/borrows are done) and everything can be implemented using the XOR logical operation. This is why calculating the CRC is easily done in hardware.
+
+For an example of C code to calculate a CRC16, see
+http://www.nongnu.org/avr-libc/user-manual/group__util__crc.html
+
+A more complex example for CRC32:
+http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/libkern/crc32.c
+
+The calculations themselves are fairly simple, even though the theory behind them is complex.
+
+There are many different CRC designs for different checksum lengths and generator polynomials. See Wikipedia under “cyclic redundancy check” for a list.
+
+
+
+System Internals & Data Formats
+
+Séamus Ó Ciardhuáin
+Room 3B08, tel. (061) 208 319; Email Seamus.OCiardhuain@LIT.ie
+
+Error Detection and Correction
+
+We have looked at hashes as a way of detecting errors in data. There are important limitations to them:
+
+Hashes don’t allow correction of errors, or indicate where in the data they are located.
+Hashes are complex and relatively slow to compute.
+For small amounts of data, the hash is large enough to be a significant overhead in the storage or transmission.
+
+We need methods which can be applied more widely, e.g. in network protocols and in hardware systems. We also want methods which allow errors to be corrected as well as detected.
+
+Parity Codes
+
+A very simple but very commonly used method is to add a single bit (called a parity bit) to each byte of the data. This bit is set to 1 or 0 depending on how many 1 bits there are in the data byte.
+
+Even parity sets the parity bit to 1 if there is an odd number of 1s in the byte; therefore, the total number of 1 bits will be even.
+
+Odd parity sets the parity bit to 1 if there is an even number of 1s in the byte; therefore, the total number of 1 bits will be odd.
+
+For example, consider the byte 11010100. There are 4 bits set to 1. For even parity, we set the parity bit to 0; for odd parity, set it to 1.
+
+Byte
+Byte + Even Parity
+Byte + Odd parity
+11010100
+11010100    0
+11010100    1
+
+
+How can this detect errors? If a data bit is changed, then the parity bit will not be correct for the number of 1s in the byte and we know there is an error. There is no difference in even or odd parity for detecting errors like this. This simple parity scheme gives no ability to correct the error, and it can only detect errors which affect an odd number of bits: 1, 3, 5, 7. If two bits are wrong, then no error is detected.
+
+Although this seems extremely simple, it is a very effective and widely used error detection method. 
+In data transmission, parity can be included for every transmitted byte on a link and recomputed by the receiver to check each byte. This is common on serial connections such as the RS-232 standard and various low-speed communications protocols.
+Data buses inside computers include parity checks, e.g. the PCI bus used in PCs. The parity may be checked for every byte or for a larger number of bits, depending on the design.
+Memory chips may include parity for every byte in the memory.
+Parity is used in the RAID system for combining hard disks together. A separate disk can be used to store parity data to detect errors; it can be extended to allow data to be reconstructed from failed disks. (See below)
+
+Parity has been used since the earliest days of digital computers because:
+It is very simple to compute with simple hardware.
+It adds very little overhead as only one bit is required.
+
+Early systems had bytes that were only 7 bits long for text data (not 8), so the parity was the eighth bit. You might still find this on simple serial communications.
+
+ASIDE: we always think of bytes as having 8 bits now, but early systems used 7 bit bytes or even 6 bit bytes; they were commonly referred to as characters rather than bytes. To avoid confusion, you will see the term “octet” used to mean a group of 8 bits in standards documents and similar places where ambiguity must be avoided.
+
+No parity could be specified, indicating that the parity bit should be ignored. Mark parity means that the parity bit is always set to 1. Space parity means that the parity bit is always set to 0. Failing to configure both ends of a link to the same setting causes the data to be considered corrupted, even if it is not.
+
+Block Parity
+
+We can extend the concept of parity by applying it to several bytes, not just one, and computing the parity value longitudinally, i.e. over the same bit position in several bytes rather than just within the same byte. To understand this, consider 5 bytes (octets) being sent, and arranging them in a table like this:
+
+
+Bit position in data byte
+
+
+0
+1
+2
+3
+4
+5
+6
+7
+Even parity bit for each byte
+Byte 1
+1
+0
+1
+0
+0
+1
+1
+0
+0
+Byte 2
+0
+1
+1
+1
+1
+0
+1
+0
+1
+Byte 3
+0
+0
+0
+0
+1
+1
+1
+1
+0
+Byte 4
+1
+1
+1
+1
+0
+0
+0
+0
+0
+Byte 5
+1
+0
+1
+0
+1
+0
+1
+0
+0
+Even parity bit for same position in each byte
+1
+0
+0
+0
+1
+0
+0
+1
+
+
+This gives us an extra byte to send, made up of the parity bits for the columns of bits in the other bytes. This is referred to as a parity check character or parity check byte.
+
+Suppose Bit 6 of the first data byte is changed from 1 to 0 by an error. Now the parity bit for that byte is wrong, so we know it has been corrupted. But looking at the parity check byte also shows an error because the parity is wrong. This allows us to identify exactly which bit is wrong and correct it.
+
+However, if two or more bits are changed in a column, then we can’t identify where the error has occurred. 
+Again, this block parity scheme is very simple and gives us a significant improvement with very little overhead.
+
+Parity in RAID Systems
+
+An important application of parity checks is in RAID systems.
+
+RAID = Redundant Array of Inexpensive Disks
+
+The idea of RAID is to combine many cheap disks together in a RAID array and, using a special controller and/or software, make them appear to the operating system as a single storage device. This allows us to construct storage which is 
+larger capacity
+faster
+more reliable
+cheaper
+than by designing single disks with the same specification. There are many configurations (known as RAID levels) defined to achieve different objectives.
+
+RAID levels 2, 3, 4, 5 and 6 all use parity in some way to improve reliability. 
+
+RAID 4 uses a dedicated disk to store the parity data. At least three disks are needed, two for data and one for parity. The parity bits are calculated by the controller and stored on the dedicated parity disk. The advantage is that if any disk fails, the data can be reconstructed from the other disks. The hardware and device drivers are designed to allow a failed disk to be removed and a new one installed without shutting down the system (hot swappable). The problem with RAID 4 is that the load on the parity disk is very heavy and it becomes a bottleneck for the system.
+
+RAID 5 uses parity, but stores the data on all the disks in the array (distributed parity). This avoids the speed bottleneck of RAID 4  but still allows a disk to fail without data being lost.
+
+
+
+Hamming Codes
+
+In the 1940s and 1950s, Richard Hamming at Bell laboratories studied error detection and correction methods, starting with parity, in great detail and developed methods which are still used. 
+
+The first step was to define a way of describing the system. Hamming described any error detection/correction scheme in terms of the number of data bits and error-correction bits in a block of data. For example, if we have 8 data bits and 1 parity bit for them, this is described as an (9, 8) code:
+There are 8+1 = 9 bits in total.
+There are 8 data bits.
+
+The code rate is the second number divided by the first, i.e.
+
+	code rate = (data bits) ÷ (total bits)
+
+So for the (9,8) code, the code rate is 8/9 = 0.89
+
+The higher the code rate, the more data is sent in the block. It is the proportion of the data sent that is not redundant error-checking data.
+
+The Hamming distance is the smallest number of changed bits which is not detected. For example, in parity, changing two bits is not detected, so the distance is 2.
+
+A good scheme increases both the code rate and the distance as much as possible, because we have the maximum amount of useful data and a better chance of detecting errors. Using these concepts, Hamming devised several schemes. His idea was to arrange for the error-checking (parity) bits to check each other as well as the data.
+
+The commonest Hamming code is used in computer memory systems, where it is called ECC memory (ECC = error-correcting code). It is described as SECDED: single error correction, double error detection. When buying memory, it is important to know whether your system uses this:
+Non-ECC chips won’t work in an ECC system, and vice versa.
+ECC memory is usually a lot more expensive (more electronics)
+
+The SECDED code used is often (72, 64); code rate = 64/72 = 0.89, the same as a single parity bit per byte. This is too complex to describe, but the idea can be understood using the (7, 4) code. A parity bit is used for each group of 4 bits (called a word). Using a Venn diagram of 4 circles, we can put each of the data bits in two circles and the 3 parity bits (using even parity for this example) in one circle.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Consider the data word 1110. We will see that to get it to work properly, we need to add an extra overall parity bit, so that the final result is an (8, 4) code.
+
+System Internals & Data Formats
+
+Séamus Ó Ciardhuáin
+Room 3B08, tel. (061) 208 319; Email Seamus.OCiardhuain@LIT.ie
+
+Error Detection and Correction
+
+We usually assume that data is copied from one place to another (e.g. on a disk or across a network) without any errors occurring. In reality, however, this is not a safe assumption: errors are common in electronic hardware and even in memory within a computer.
+
+We need methods to detect these errors and perhaps to correct them automatically.
+
+Where do the errors come from?
+
+Noise: all electronic systems are subject to noise, which is random variations in the electronic signals. If the noise is large enough it can change data, e.g. a 1 bit becomes a 0 bit. Other electrical equipment is a common cause of this, which is why the design and installation of network cables is important to reduce noise. Cosmic rays and other radiation can alter the data stored in memory chips (soft errors)!
+Faults: no equipment is perfect, so faults can cause data to be altered.
+
+The effects of errors like this can be disastrous: e.g software may be corrupted, causing systems to crash, or important data may be altered to incorrect values. Systems can be built to be more resistant to different types of error, but it is impossible to prevent them entirely.
+
+Error detection is the name given to methods of detecting when errors have occurred in data.
+
+Error correction is the name given to methods of detecting and then automatically correcting errors which occur in data.
+
+It's important to be clear that we are not discussing errors caused by invalid entry of data by people for example: the errors in question occur at random within a system due to physical causes.
+
+A number of techniques have been developed to detect and correct errors. In general, detecting them is easier that correcting them with complete reliability. Error correction and detection is built in to all IT systems at a low level, e.g.
+
+Memory hardware
+Disk drives and other storage
+Network protocols
+
+So even though you will not be aware of it, this is happening all the time as you work with computers.
+
+The basis of most techniques is to add some additional data which is in some way computed from the original data. This is called adding redundancy. This extra data is computed at the origin of the data, and sent along with it to the destination. At the destination it can be recalculated and compared to the original value.
+
+We can describe this as follows:
+1. At the source or origin of the data, we compute a checksum value from the data.
+2. This is sent with the data to the destination through a channel (which could be a network connection, memory bus, disk connector, or any other path).
+3. At the destination, the checksum is computed again from the data, and compared to the received checksum.
+4. If the two checksum values are the same, then the data is considered to have been sent correctly. If they differ, then an error has occurred.
+5. Some checksum methods allow an error to be detected; others allow both detection and correction.
+
+Hash Functions 
+
+Hash functions have many uses in computing, one of which is error detection. We will look at them first since they show the concepts of error detection, and we will return to them later as a tool for security.
+
+Definition: “A hash function is a function that takes as input an arbitrarily long string of bits (or bytes) and produces a fixed-size result.”
+
+Given a message m and function h, the hash value for the message is H = h(m).
+
+They are also called message digest functions and the result is called the digest. You also see them referred to as a message fingerprint. Message does not mean that there is any restriction to using this idea for communications. The “message” can be any data at all, e.g. you will find that this is a common way of allowing you to verify that you have a true copy of downloaded files for software distribution.
+
+Confusion avoidance note: this is nothing to do with the “hash functions” used for data structures. If you are searching online be sure you are looking at the right information! Strictly, we are talking about “cryptographic hash functions”.
+
+So a hash function takes data and calculates a number which is characteristic of that data. Any change to the data results in a large change in the calculated hash, making it easy to detect an error.
+
+Desirable Properties of a Hash Function
+
+Arbitrary size of input: the function must be usable for inputs of varying size with no upper or lower limit.
+
+Fixed size output: the advantage of a hash function is that any input (of any size) is reduced to a single fixed-size values, typically 128 to 512 bits.
+
+Easy to compute: since large amounts of data will be passed through the function, it should be possible to do the computation rapidly.
+
+One way function: given m it is easy to compute H = h(m). However, given H it must be computationally infeasible to compute m. In other words, the function can’t be inverted. Note that “computationally infeasible” here does not mean “impossible”.
+
+Collision resistance: we want to be able to distinguish messages based only on the hash value. Given two messages m1 and m2, h(m1) ? h(m2).
+
+Weakly collision free:
+Given message x, it is computationally infeasible to find y (not equal to x) such that h(x) = h(y).
+
+Strongly collision free:
+Given h, if it is computationally infeasible to find any x and y such that h(x) = h(y) then h is strongly collision free.
+
+Subtle point: A real hash function must have infinitely many collisions however – there are infinitely many inputs but only a finite number of outputs determined by the digest’s size, e.g. for 128 bits there are 2128 digests. Collision resistance means that although these collisions exist, they cannot be found in practice.
+
+Construction of Hash Functions
+
+The main feature of hash functions is that they take an arbitrary size of input and reduce it to a fixed output size. The output size varies depending on the function being used. Newer functions use larger sizes because in general they improve the collision resistance of the function. For example, MD5 uses 128 bits, SHA-1 uses 160 bits, and the SHA-2 family goes up to 512 bits.
+
+Hash functions all have very similar structures in the way they work.
+The input is broken into blocks m1, m2, … mi,…, mk, all of which are the same size. They need not be the same size as the final hash value.
+To deal with any size of input, padding may have to be added to the last block to make it the full size. This will be defined by the design of the function.
+A constant initial value H0 is defined by the hash function design. Starting with this value, compute
+Hi = h(Hi-1, mi)
+for i = 1 to k (in other words, combining the result Hi-1 from all previous blocks in the message with the current one mi).
+
+The function h is referred to as a compression function because it takes the block of data and reduces it to a fixed size.
+
+Damgård/Merkle iterative structure for hash functions; F is a compression function. (from RSA Laboratories, http://www.rsa.com/rsalabs/node.asp?id=2176)
+
+
+Note what is done: each block is combined with the result of hashing all previous blocks. This ensures that a change anywhere in the message will have a large effect on the final hash value. The details of how this is done (i.e. the definition of h) are the crucial part of the design of a hash function. 
+
+The operations used for h include addition, shifting, and exclusive-or. 
+
+Real Hash Functions
+
+MD5
+
+MD5 = Message Digest 5. Designed by Ron Rivest to fix problems with a previous design MD4. The definition is published as RFC1321 The MD5 Message-Digest Algorithm, April 1992. It is a 128 bit hash. 
+
+MD5 is very widely used. There is a standard utility program called md5sum on Unix/Linux systems to compute the MD5 value of a file. It is also available for Windows.
+
+For security use, MD5 is best avoided now. However, it remains widely used and acceptable for verifying the integrity of downloaded data files.
+
+US FIPS Hashes
+
+FIPS = Federal Information Processing Standard
+
+The US National Institute of Standard and Technology (NIST) has developed a number of hash functions.
+
+The first was SHA (Secure Hash Algorithm), but after flaws were identified in it a modified version called SHA-1 was standardized and has been widely used. It is a 160-bit function.
+
+The SHA-2 family is the replacement for SHA-1. There are several forms of it with different sizes of the resulting hash value (message digest): SHA-224, SHA-256, SHA-384, SHA-512. These are slower to compute than SHA-1 but do not suffer from the problems known to exist in SHA-1. They are now the recommended functions and the advice from NIST is that SHA-1 should be discontinued.
+
+The SHA2 family is specified in FIPS 180-3 (October 2008). See the NIST web page for details and downloads of the standard.
+
+NIST are now nearing the end of a competition for a new hash standard which will be called SHA-3. A winner is expected in late 2012.
+
+RIPEMD
+
+These are European functions. They are less widely used (and therefore less well tested from a cryptography point of view) than the SHA algorithms. RIPEMD-160 is a 160-bit function, while RIPEMD-256 and RIPEMD-320 have a larger hash values BUT are no more secure – the larger value may be useful in some cryptographic applications.
+
+Whirlpool
+
+This algorithm gives a 512-bit hash value. It was originally developed as a submission to a European research project which was selecting cryptographic functions, and since it was the only hash function submitted it was chosen by default. It is free for anyone to use and reference implementations are provided.
+
+ISO Standard for Hashes
+
+100 pages! Here is ISO’s abstract of the standard from their web page:
+
+“ISO/IEC 10118-3:2004 specifies the following seven dedicated hash-functions, i.e. specially-designed hash-functions: 
+the first hash-function (RIPEMD-160) in Clause 7 provides hash-codes of lengths up to 160 bits; 
+the second hash-function (RIPEMD-128) in Clause 8 provides hash-codes of lengths up to 128 bits; 
+the third hash-function (SHA-1) in Clause 9 provides hash-codes of lengths up to 160 bits;
+the fourth hash-function (SHA-256) in Clause 10 provides hash-codes of lengths up to 256 bits; 
+the fifth hash-function (SHA-512) in Clause 11 provides hash-codes of lengths up to 512 bits;
+the sixth hash-function (SHA-384) in Clause 12 provides hash-codes of a fixed length, 384 bits; and
+the seventh hash-function (WHIRLPOOL) in Clause 13 provides hash-codes of lengths up to 512 bits.
+For each of these dedicated hash-functions, ISO/IEC 10118-3:2004 specifies a round-function that consists of a sequence of sub-functions, a padding method, initializing values, parameters, constants, and an object identifier as normative information, and also specifies several computation examples as informative information.”
+
+(from http://www.iso.org)
+
+This is significant because being standardized carries a lot of weight with official bodies such as government departments and agencies. So the preference will be strong for a hash function which appears in the ISO standard.
+
+Standardized functions can also be expected to have been subjected to considerable scrutiny and research, so there is less likelihood of major flaws being found later.
+
+Note that MD5 is not one of the listed functions.
+
+Applications of Hash Functions
+
+1. Verifying data – e.g. after downloading from a web site, or to check that a DVD/CD has been correctly created.
+
+2. Identifying known files – This allows “black lists” and “white lists” to be created.
+
+3. Intrusion detection and “change auditing” – Tripwire http://www.tripwire.com/
+
+
+How many Unique Values?
+
+How many unique values are there for a given size of hash value? This is important because it indicates how likely it is that an error would be undetected.
+
+2128 = 340,282,366,920,938,463,463,374,607,431,768,211,456 (e.g. MD5)
+
+2160  = 1,461,501,637,330,902,918,203,684,832,716,283,019,655,932,542,976 (e.g. SHA-1)
+
+2256 = 115,792,089,237,316,195,423,570,985,008,687,907,853,269,984,665,640,564,039,457,584,007,913,129,639,936  (e.g. SHA-256)
+
+2512 = 1.34078079 × 10154 (e.g. SHA-512)
+
+For comparison, the number of atoms in the observable universe is estimated to be between 1078 and 1082.
+
+Why not Use Hashes for all Error Detection?
+
+Hashes don’t allow correction of errors, or indicate where in the data they are located.
+Hashes are complex and relatively slow to compute.
+For small amounts of data, the hash is large enough to be a significant overhead in the storage or transmission.
+
+So other techniques are needed.
